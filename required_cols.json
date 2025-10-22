@@ -1,0 +1,10 @@
+{
+    "SimulationID": "simulation_id",
+    "CA (mol/m^3)": "ca",
+    "CB (mol/m^3)": "cb",
+    "CC (mol/m^3)": "cc",
+    "CD (mol/m^3)": "cd",
+    "T (K)": "temperature",
+    "Tsensor (K)": "t_sensor",
+    "t (sec)": "rxn_time"
+}
