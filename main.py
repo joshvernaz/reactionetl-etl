@@ -7,7 +7,6 @@ def main():
     processed_csvs = file_manager.get_processed_csvs()
 
     dm = DatabaseManager()
-    dm.create_tables()
     
     for csv in processed_csvs:
         if dm.validate_schema(file_path=str(csv)):

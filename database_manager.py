@@ -24,6 +24,8 @@ class DatabaseManager:
             user=os.getenv("DB_USER"), 
             password=os.getenv("DB_PASS")
             )
+        
+        self.create_tables()
 
     def validate_schema(self, file_path):
         """
