@@ -9,10 +9,16 @@ def main():
     dm = DatabaseManager()
     
     for csv in processed_csvs:
+        simulation_id = str(csv.name)[8:-4]
+
         if dm.validate_schema(file_path=str(csv)):
-            dm.ingest_processed_csv(file_path=str(csv))
+            
+            etl_id = dm.insert_etl_run_log(simulation_id=simulation_id, etl_type="reaction")
+            inserted_rows = dm.ingest_processed_csv(file_path=str(csv))
+            
             if not dm.errored:
                 file_manager.move_file_to_ingested(csv)
+                dm.update_etl_run_log(etl_id=etl_id, etl_type="reaction", row_count=inserted_rows)
 
     metadata_list = file_manager.get_metadata()
     for json in metadata_list:

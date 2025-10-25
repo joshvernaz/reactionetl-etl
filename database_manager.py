@@ -56,7 +56,10 @@ class DatabaseManager:
                 finally:
                     cur.close()
 
-    def ingest_processed_csv(self, file_path):
+    def ingest_processed_csv(self, file_path) -> int:
+        """
+        Ingests the processed CSV file. Returns the number of rows inserted into the table fact_sim.
+        """
         df = read_csv(file_path)
         cols = df.columns.to_list()
         sql = f"copy fact_sim ({", ".join(cols)}) from '{file_path}' with (format csv, header match);"
@@ -64,6 +67,7 @@ class DatabaseManager:
         with self.conn.cursor() as cur:
             try:
                 cur.execute(sql)
+                rows_inserted = cur.rowcount
                 self.conn.commit()
             except Exception as e:
                 self.conn.rollback()
@@ -72,6 +76,8 @@ class DatabaseManager:
                 cur.close()
 
         self.errored = False
+
+        return rows_inserted
 
     def ingest_metadata(self, file_path):        
         
@@ -105,3 +111,60 @@ class DatabaseManager:
                 cur.close()
         
         self.errored = False
+
+    def insert_etl_run_log(self, simulation_id: str, etl_type: str) -> str:
+        """
+        Inserts a row into the etl_run_log table for a simulation defined by simulation_id
+        etl_type should be 'metadata' or 'reaction'
+        """
+        with self.conn.cursor() as cur:
+            
+            try:
+                cur.execute("""
+                            insert into etl_run_log (simulation_id, etl_type, status)
+                            values (%s, %s, 'running')
+                            returning etl_id
+                            """, (simulation_id, etl_type))
+                etl_id = cur.fetchone()[0]
+                self.conn.commit()
+
+            except Exception as e:
+                print(f"sql exception: {e}")
+                self.conn.rollback()
+                self.errored = True
+
+            finally:
+                cur.close()
+
+        self.errored = False
+        
+        return etl_id
+    
+    def update_etl_run_log(self, etl_id: str, etl_type: str, row_count: int):
+        """
+        Updates the etl_run_log table upon successful ingestion
+        etl_type should be 'metadata' or 'reaction'
+        """
+        with self.conn.cursor() as cur:
+
+            try:
+                cur.execute("""
+                            update etl_run_log
+                            set finished_at = now(),
+                                records_inserted = %s,
+                                status = 'success',
+                                duration_seconds = extract(epoch from (now() - started_at))
+                            where
+                                etl_id = %s
+                                and etl_type = %s
+                            """, (row_count, etl_id, etl_type)
+                )
+                self.conn.commit()
+            
+            except Exception as e:
+                print(f"sql exception: {e}")
+                self.conn.rollback()
+                self.errored = True
+
+            finally:
+                cur.close()
