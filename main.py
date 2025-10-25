@@ -3,11 +3,11 @@ from database_manager import DatabaseManager
 
 def main():
     
+    dm = DatabaseManager()
+
+    # Ingest CSVs
     file_manager.process_incoming_csvs()
     processed_csvs = file_manager.get_processed_csvs()
-
-    dm = DatabaseManager()
-    
     for csv in processed_csvs:
         simulation_id = str(csv.name)[8:-4]
 
@@ -20,11 +20,17 @@ def main():
                 file_manager.move_file_to_ingested(csv)
                 dm.update_etl_run_log(etl_id=etl_id, etl_type="reaction", row_count=inserted_rows)
 
+    # Ingest metadata
     metadata_list = file_manager.get_metadata()
     for json in metadata_list:
+        simulation_id = str(json.name)[9:-5]
+
+        etl_id = dm.insert_etl_run_log(simulation_id=simulation_id, etl_type = "metadata")
         dm.ingest_metadata(file_path=str(json))
+
         if not dm.errored:
             file_manager.move_file_to_ingested(json)
+            dm.update_etl_run_log(etl_id=etl_id, etl_type="metadata", row_count=inserted_rows)
 
     dm.conn.close()
 
