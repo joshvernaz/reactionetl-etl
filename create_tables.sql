@@ -37,6 +37,7 @@ create table if not exists etl_run_log
 	started_at timestamp not null default now(),
 	finished_at timestamp,
 	simulation_id uuid,
+	etl_type varchar(16),
 	records_inserted int,
 	records_updated int,
 	status text,
