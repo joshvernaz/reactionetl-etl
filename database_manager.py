@@ -24,11 +24,14 @@ class DatabaseManager:
     def __init__(self):
         load_dotenv()
         logger.info(f"Successfully connected to {os.getenv('DB_NAME')}")
-        self.conn = psycopg2.connect(
-            dbname=os.getenv("DB_NAME"), 
-            user=os.getenv("DB_USER"), 
-            password=os.getenv("DB_PASS")
-            )
+        try:
+            self.conn = psycopg2.connect(
+                dbname=os.getenv("DB_NAME"), 
+                user=os.getenv("DB_USER"), 
+                password=os.getenv("DB_PASS")
+                )
+        except Exception as e:
+            logger.exception(f"Failed to create connection to {os.getenv("DB_NAME")}", exc_info=True)
         
         self.create_tables()
 
@@ -82,6 +85,7 @@ class DatabaseManager:
             except Exception as e:
                 self.conn.rollback()
                 self.errored = True
+                logger.exception(f"Failed to ingest {file_path_Path.name}", exc_info=True)
             finally:
                 cur.close()
 
@@ -99,7 +103,7 @@ class DatabaseManager:
         try:
             metadata = Metadata(**file)
         except ValidationError as e:
-            print("Metadata validation error: f{e}")
+            logger.warning(f"Failed to validate metadata for {file_path_Path.name}")
         
         inserts = metadata.model_dump()
         
@@ -115,9 +119,9 @@ class DatabaseManager:
                 cur.execute(sql, values_as_str)
                 self.conn.commit()
             except Exception as e:
-                print(f"sql exception: {e}")
                 self.conn.rollback()
                 self.errored = True
+                logger.exception(f"Failed to ingest {file_path_Path.name}", exc_info=True)
 
             finally:
                 cur.close()
@@ -142,7 +146,7 @@ class DatabaseManager:
                 self.conn.commit()
 
             except Exception as e:
-                print(f"sql exception: {e}")
+                logger.error(f"Failed to insert row into etl_run_log for simulation_id {simulation_id}")
                 self.conn.rollback()
                 self.errored = True
 
@@ -175,7 +179,7 @@ class DatabaseManager:
                 self.conn.commit()
             
             except Exception as e:
-                print(f"sql exception: {e}")
+                logger.error(f"Failed to update row in etl_run_log for etl_id {etl_id}")
                 self.conn.rollback()
                 self.errored = True
 
