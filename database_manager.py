@@ -48,7 +48,7 @@ class DatabaseManager:
         if set(required_cols) - incoming_schema:
             raise ValueError("Required columns are not present")
         
-        logging.info(f"Schema for {file_path_Path.name[9:-5]} validated")
+        logging.info(f"Schema for {file_path_Path.name[8:-4]} validated")
         return True
 
     def create_tables(self):
