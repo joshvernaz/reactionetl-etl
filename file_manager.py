@@ -21,7 +21,7 @@ def process_incoming_csvs():
     try:
         processed_dir.chmod(mode=0o777)
     except PermissionError:
-        print(f"Warning - could not chmod {str(processed_dir)}")
+        logger.warning(f"Could not chmod {str(processed_dir)}")
 
     sim_dir = Path.cwd().parent.parent / "incoming"
     sim_days = [child for child in sim_dir.iterdir() if child.is_dir()]
@@ -33,14 +33,14 @@ def process_incoming_csvs():
         try:
             destination_dir.chmod(mode=0o777)
         except PermissionError:
-            print(f"Warning - could not chmod {str(destination_dir)}")
+            logger.warning(f"Could not chmod {str(destination_dir)}")
 
         archive_dir = (day.parent.parent / "archive" / day.name)
         archive_dir.mkdir(parents=True, exist_ok=True)
         try:
             archive_dir.chmod(mode=0o777)
         except PermissionError:
-            print(f"Warning - could not chmod {str(archive_dir)}")
+            logger.warning(f"Could not chmod {str(archive_dir)}")
 
         for file in [x for x in day.iterdir() if x.suffix == ".csv"]:
             # Store clean CSVs in processed
@@ -54,12 +54,14 @@ def process_incoming_csvs():
 
             missing = set(column_map.values()) - set(df.columns)
             if missing:
+                logger.error(f"CSV is missing required columns: {missing}")
                 raise ValueError(f"CSV is missing required columns: {missing}")
 
             try:
                 if "Unnamed: 0" in df.columns:
                     df = df.drop(columns=["Unnamed: 0"])
                 df.to_csv(destination_dir / file.name, index=False, index_label=False)
+                logger.info(f"{file.name} successfully processed and written to {destination_dir}")
                 clean_successful = True
             except PermissionError as e:
                 print(f"{e}")
@@ -83,6 +85,7 @@ def get_processed_csvs() -> List[Path]:
     try:
         ingested_dir.chmod(mode=0o777)
     except PermissionError:
+        logger.warning(f"Could not chmod {str(ingested_dir)}")
         print(f"Warning - could not chmod {str(ingested_dir)}")
 
     processed_dir = Path.cwd().parent.parent / "processed"
@@ -94,7 +97,7 @@ def get_processed_csvs() -> List[Path]:
         try:
             destination_dir.chmod(mode=0o777)
         except PermissionError:
-            print(f"Warning - could not chmod {str(destination_dir)}")
+            logger.warning(f"Could not chmod {str(destination_dir)}")
 
         for file in [x for x in day.iterdir() if x.suffix == ".csv"]:
             output.append(file)
