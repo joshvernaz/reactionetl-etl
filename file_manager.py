@@ -3,11 +3,14 @@ from pathlib import Path
 from shutil import move
 from typing import List
 import json
+import logging
 
 # incoming:     Newly finished simulations
 # archive:      Simulations that have already been processed
 # processed:    Cleaned CSVs from incoming
 # ingested:     Cleaned CSVs loaded into PostgreSQL
+
+logger = logging.getLogger(__name__)
 
 def process_incoming_csvs():
     """Cleans CSV files so they can be bulk ingested by PostgreSQL COPY command"""
