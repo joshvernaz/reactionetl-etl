@@ -14,6 +14,7 @@ logger = logging.getLogger(__name__)
 
 def process_incoming_csvs():
     """Cleans CSV files so they can be bulk ingested by PostgreSQL COPY command"""
+    logger.info("Starting CSV processing")
 
     processed_dir = (Path.cwd().parent.parent / "processed")
     processed_dir.mkdir(parents=True, exist_ok=True)
@@ -68,6 +69,9 @@ def process_incoming_csvs():
             # Move source data to archive
             if clean_successful:
                 move(src=file, dst=archive_dir)
+                logger.info(f"{file.name} moved to {archive_dir}")
+
+    logger.info("Finished CSV processing")
 
 def get_processed_csvs() -> List[Path]:
     """Get a list of processed CSVs not yet ingested"""

@@ -12,9 +12,7 @@ def main():
     dm = DatabaseManager()
 
     # Ingest CSVs
-    logger.info("Starting CSV processing")
     file_manager.process_incoming_csvs()
-    logger.info("Finished CSV processing")
 
     processed_csvs = file_manager.get_processed_csvs()
     for csv in processed_csvs:

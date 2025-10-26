@@ -23,7 +23,7 @@ class Metadata(BaseModel):
 class DatabaseManager:
     def __init__(self):
         load_dotenv()
-        logging.info(f"Successfully connected to {os.getenv('DB_NAME')}")
+        logger.info(f"Successfully connected to {os.getenv('DB_NAME')}")
         self.conn = psycopg2.connect(
             dbname=os.getenv("DB_NAME"), 
             user=os.getenv("DB_USER"), 
@@ -48,7 +48,7 @@ class DatabaseManager:
         if set(required_cols) - incoming_schema:
             raise ValueError("Required columns are not present")
         
-        logging.info(f"Schema for {file_path_Path.name[8:-4]} validated")
+        logger.info(f"Schema for {file_path_Path.name[8:-4]} validated")
         return True
 
     def create_tables(self):
@@ -69,7 +69,7 @@ class DatabaseManager:
         """
         file_path_Path = Path(file_path)
 
-        logging.info(f"Starting data ingestion for {file_path_Path.name[8:-4]}")
+        logger.info(f"Starting data ingestion for {file_path_Path.name[8:-4]}")
         df = read_csv(file_path)
         cols = df.columns.to_list()
         sql = f"copy fact_sim ({", ".join(cols)}) from '{file_path}' with (format csv, header match);"
@@ -86,13 +86,13 @@ class DatabaseManager:
                 cur.close()
 
         self.errored = False
-        logging.info(f"Finished data ingestion for {file_path_Path.name[8:-4]}")
+        logger.info(f"Finished data ingestion for {file_path_Path.name[8:-4]} with {rows_inserted} rows inserted")
 
         return rows_inserted
 
     def ingest_metadata(self, file_path):        
         file_path_Path = Path(file_path)
-        logging.info(f"Starting metadata ingestion for {file_path_Path.name[9:-5]}")
+        logger.info(f"Starting metadata ingestion for {file_path_Path.name[9:-5]}")
         with open(file=file_path, mode="r") as f:
             file = json.load(f)
 
@@ -123,7 +123,7 @@ class DatabaseManager:
                 cur.close()
         
         self.errored = False
-        logging.info(f"Finished metadata ingestion for {file_path_Path.name[9:-5]}")
+        logger.info(f"Finished metadata ingestion for {file_path_Path.name[9:-5]}")
 
     def insert_etl_run_log(self, simulation_id: str, etl_type: str) -> str:
         """
