@@ -185,3 +185,27 @@ class DatabaseManager:
 
             finally:
                 cur.close()
+
+    def update_simulation_num(self, simulation_id):
+        """
+        Updates the fact_sim table with the matching simulation_num from dim_rxn
+        """
+        with self.conn.cursor() as cur:
+            try:
+                cur.execute("""
+                            update fact_sim fs
+                            set simulation_num = dr.simulation_num
+                            from dim_rxn dr
+                            where 
+                                fs.simulation_id = dr.simulation_id
+                                and dr.simulation_id = %s;
+                            """, (simulation_id,))
+                self.conn.commit()
+                
+            except:
+                logger.error(f"Failed to update fact_sim.simulation_num for simulation_id {simulation_id}")
+                self.conn.rollback()
+                self.errored = True
+            finally:
+                cur.close()
+

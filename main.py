@@ -37,6 +37,7 @@ def main():
         if not dm.errored:
             file_manager.move_file_to_ingested(json)
             dm.update_etl_run_log(etl_id=etl_id, etl_type="metadata", row_count=inserted_rows)
+            dm.update_simulation_num(simulation_id=simulation_id)
 
     dm.conn.close()
 
