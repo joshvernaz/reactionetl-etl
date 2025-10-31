@@ -222,7 +222,7 @@ class DatabaseManager:
     def get_indexes(self) -> List[str]:
         with self.conn.cursor() as cur:
             try:
-                cur.execute("select indexname from pg_indexes where tablename not like 'pg%' and indexdef not like 'create unique%' and indexname like 'idx%';")
+                cur.execute("select indexname from pg_indexes where tablename not like 'pg%' and indexdef not like 'CREATE UNIQUE%' and indexname like 'idx%';")
                 self.conn.commit()
                 index_list = cur.fetchall()
             except:
