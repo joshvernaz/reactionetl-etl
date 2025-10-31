@@ -13,15 +13,6 @@ create table if not exists fact_sim
 	rxn_time 		float
 );
 
-create index if not exists idx_fact_sim_simulation_num
-    on fact_sim (simulation_num);
-
-create index if not exists idx_fact_sim_ca_cb_rxn_time_temperature
-    on fact_sim (ca, cb, rxn_time, temperature);
-
-create index if not exists idx_fact_sim_rxn_time_temperature
-    on fact_sim (rxn_time, temperature);
-
 
 ---------- dim_rxn ----------	
 create table if not exists dim_rxn
@@ -42,12 +33,6 @@ create sequence simulation_num_incrementor as int start 1 owned by dim_rxn.simul
 
 alter table dim_rxn
 	alter column simulation_num set default nextval('simulation_num_incrementor');
-
-create index if not exists idx_dim_rxn_simulation_num
-    on dim_rxn (simulation_num);
-
-create index if not exists idx_dim_rxn_ca0_cb0
-    on dim_rxn (ca0, cb0);
 
 
 ---------- etl_run_log ----------

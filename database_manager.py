@@ -6,6 +6,7 @@ import os
 from dotenv import load_dotenv
 import logging
 from pathlib import Path
+from typing import List
 
 logger = logging.getLogger(__name__)
 
@@ -34,6 +35,7 @@ class DatabaseManager:
             logger.exception(f"Failed to create connection to {os.getenv("DB_NAME")}", exc_info=True)
         
         self.create_tables()
+        self.create_indexes()
 
     def validate_schema(self, file_path: str):
         """
@@ -63,9 +65,17 @@ class DatabaseManager:
                     self.conn.commit()
                 except:
                     self.conn.rollback()
-                finally:
-                    cur.close()
 
+    def create_indexes(self):
+        with open(file="create_indexes.sql", mode="r") as command:
+            sql = command.read()
+            with self.conn.cursor() as cur:
+                try:
+                    cur.execute(sql)
+                    self.conn.commit()
+                except:
+                    self.conn.rollback()
+                
     def ingest_processed_csv(self, file_path) -> int:
         """
         Ingests the processed CSV file. Returns the number of rows inserted into the table fact_sim.
@@ -208,4 +218,50 @@ class DatabaseManager:
                 self.errored = True
             finally:
                 cur.close()
+
+    def get_indexes(self) -> List[str]:
+        with self.conn.cursor() as cur:
+            try:
+                cur.execute("select indexname from pg_indexes where tablename not like 'pg%' and indexdef not like 'create unique%' and indexname like 'idx%';")
+                self.conn.commit()
+                index_list = cur.fetchall()
+            except:
+                self.conn.rollback()
+        
+        indexes = []
+        for i in range(len(index_list)):
+            indexes.append(index_list[i][0])
+
+        return indexes
+    
+    def drop_indexes(self):
+        indexes = self.get_indexes()
+        
+        with self.conn.cursor() as cur:
+            for index in indexes:
+                try:
+                    cur.execute(f"""drop index {index};""")
+                    self.conn.commit()
+                    logger.info(f"Dropped index {index}")
+                except Exception as e:
+                    logger.error(f"Failed to drop index {index}: {e}")
+
+    # def get_index_defs(self) -> List[str]:
+    #     """Returns a list of CREATE INDEX statements for the indexes before """
+    #     with self.conn.cursor() as cur:
+    #         try:
+    #             cur.execute("select indexdef from pg_indexes where tablename not like 'pg_%' and indexdef not like 'create unique%';")
+    #             self.conn.commit()
+    #             index_list = cur.fetchall()
+    #         except:
+    #             self.conn.rollback()
+
+    #     index_defs = []
+    #     for i in range(len(index_list)):
+    #         index_defs.append(index_list[i])
+
+    #     return index_defs
+
+    def recreate_indexes(self):
+        self.create_indexes()
 

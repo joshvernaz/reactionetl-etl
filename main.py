@@ -10,7 +10,8 @@ def main():
     logger.info("Starting ETL job")
 
     dm = DatabaseManager()
-
+    dm.drop_indexes()
+    
     # Ingest CSVs
     file_manager.process_incoming_csvs()
 
@@ -39,6 +40,8 @@ def main():
             dm.update_etl_run_log(etl_id=etl_id, etl_type="metadata", row_count=inserted_rows)
             dm.update_simulation_num(simulation_id=simulation_id)
 
+    dm.recreate_indexes()
+    
     dm.conn.close()
 
     logger.info("Finished ETL job")
