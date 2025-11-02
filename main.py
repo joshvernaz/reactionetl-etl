@@ -10,7 +10,6 @@ def main():
     logger.info("Starting ETL job")
 
     dm = DatabaseManager()
-    dm.drop_indexes()
     
     # Ingest CSVs
     file_manager.process_incoming_csvs()
