@@ -73,6 +73,7 @@ class DatabaseManager:
                 try:
                     cur.execute(sql)
                     self.conn.commit()
+                    logger.info("Dropped indexes")
                 except:
                     self.conn.rollback()
                 

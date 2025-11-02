@@ -16,6 +16,10 @@ def main():
     file_manager.process_incoming_csvs()
 
     processed_csvs = file_manager.get_processed_csvs()
+
+    if len(processed_csvs) > 50:
+        dm.drop_indexes()
+
     for csv in processed_csvs:
         simulation_id = str(csv.name)[8:-4]
 
