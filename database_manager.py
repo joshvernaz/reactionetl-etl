@@ -209,12 +209,13 @@ class DatabaseManager:
                             from dim_rxn dr
                             where 
                                 fs.simulation_id = dr.simulation_id
-                                and fs.simulation_id is null;
+                                and fs.simulation_num is null;
                             """)
                 self.conn.commit()
                 logger.info("fact_sim.simulation_num updated")
-            except:
+            except Exception as e:
                 self.conn.rollback()
+                logger.error(f"{e}")
                 self.errored = True
             finally:
                 cur.close()

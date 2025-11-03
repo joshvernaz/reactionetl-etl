@@ -43,7 +43,7 @@ def main():
             dm.update_etl_run_log(etl_id=etl_id, etl_type="metadata", row_count=inserted_rows)
 
     dm.recreate_indexes()
-    dm.update_simulation_num(simulation_id=simulation_id)
+    dm.update_simulation_num()
     
     dm.conn.close()
 
