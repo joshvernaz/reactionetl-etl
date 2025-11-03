@@ -197,28 +197,47 @@ class DatabaseManager:
             finally:
                 cur.close()
 
-    def update_simulation_num(self):
+    def update_simulation_num(self, rxn_batch_size: int = 50):
         """
         Updates the fact_sim table with the matching simulation_num from dim_rxn
         """
+        batch_size = rxn_batch_size
         with self.conn.cursor() as cur:
             try:
-                cur.execute("""
-                            update fact_sim fs
-                            set simulation_num = dr.simulation_num
-                            from dim_rxn dr
-                            where 
-                                fs.simulation_id = dr.simulation_id
-                                and fs.simulation_num is null;
-                            """)
+                cur.execute("select max(simulation_num) from dim_rxn;")
                 self.conn.commit()
-                logger.info("fact_sim.simulation_num updated")
+                max_num = cur.fetchone()[0]
+                print(max_num)
+
+                cur.execute("select max(simulation_num) from fact_sim;")
+                self.conn.commit()
+                last_num = cur.fetchone()[0]
+                print(last_num)
+
             except Exception as e:
                 self.conn.rollback()
                 logger.error(f"{e}")
-                self.errored = True
-            finally:
-                cur.close()
+
+        while last_num < max_num:
+            with self.conn.cursor() as cur:
+                try:
+                    cur.execute("""
+                                update fact_sim fs
+                                set simulation_num = dr.simulation_num
+                                from dim_rxn dr
+                                where
+                                    fs.simulation_id = dr.simulation_id
+                                    and fs.simulation_num is null
+                                    and dr.simulation_num > %s
+                                    and dr.simulation_num <= %s
+                                """, (last_num, last_num + batch_size))
+                    self.conn.commit()
+                    last_num += batch_size
+                    logger.info(f"fact_sim.simulation_num updated for {batch_size}-reaction batch starting at simulation_num {last_num}")
+                except Exception as e:
+                    self.conn.rollback()
+                    logger.error(f"{e}")
+                    self.errored = True
 
     def get_indexes(self) -> List[str]:
         with self.conn.cursor() as cur:

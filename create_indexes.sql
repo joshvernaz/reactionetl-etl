@@ -1,6 +1,9 @@
 create index if not exists idx_fact_sim_simulation_num
     on fact_sim (simulation_num);
 
+create index if not exists idx_fact_sim_simulation_id
+    on fact_sim (simulation_id);
+
 create index if not exists idx_fact_sim_ca_cb_rxn_time_temperature
     on fact_sim (ca, cb, rxn_time, temperature);
 
